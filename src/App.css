@@ -21,42 +21,55 @@
   color: #09d3ac;
 }
 
-.formErrors{
+.formErrors {
   color: red;
 }
 
-.has-error input{
+.has-error input {
   border: 1px solid red;
 }
 
-.container{
-  margin-top: 2rem;
-  margin-bottom: 5em;
+.container {
+  padding: 2rem;
 }
 
-.searchFileForm{
+.searchFileForm {
   margin-bottom: 40px;
 }
 
-.route-buttons a{
+.route-buttons a {
   color: white;
 }
 
-.route-buttons a:hover{
+.route-buttons a:hover {
   color: white;
   text-decoration: none;
 }
 
-.margin-all{
-	margin: 40px;
+.d-flex {
+  margin-top: 3rem;
+  margin-bottom: 3rem;
 }
 
-.margin-header{
-	margin: 20px;
+.name-search {
+  margin-top: 6rem;
 }
 
-.route-buttons .btn{
-  height:50px;
+.header {
+  margin-top: 1rem;
+}
+
+.name-search button,
+.advanced-search button {
+  background-color: #563d7c;
+}
+
+.name-search input {
+  border-radius: 15px;
+}
+
+.route-buttons .btn {
+  height: 50px;
   width: 300px;
 }
 

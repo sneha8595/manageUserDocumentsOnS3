@@ -3,8 +3,11 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
-    "aws-sdk": "^2.533.0",
+    "amazon-cognito-auth-js": "^1.3.2",
+    "amazon-cognito-identity-js": "^3.1.2",
+    "aws-sdk": "^2.549.0",
     "bootstrap": "^4.3.1",
+    "dotenv": "^8.1.0",
     "moment": "^2.24.0",
     "moment-range": "^4.0.2",
     "react": "^16.9.0",
@@ -21,7 +24,9 @@
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "backup": "aws s3 sync s3://omc-dms.com S3_bkp --profile omc_sneha",
+    "deploy": "aws s3 sync build/ s3://omc-dms.com --acl public-read --profile omc_sneha --cache-control public,max-age=604800"
   },
   "eslintConfig": {
     "extends": "react-app"

@@ -4,7 +4,6 @@ import "react-daterange-picker/dist/css/react-calendar.css";
 import { FaSearch, FaCaretDown, FaCaretUp } from 'react-icons/fa';
 import { Button } from 'reactstrap';
 
-
 class DateRangePickerComp extends React.Component {
   state = {
     isOpen: false
@@ -15,7 +14,7 @@ class DateRangePickerComp extends React.Component {
   render() {
     const selectionvalue = `${this.props.dateRange.start.format("MMMM D, YYYY")} - ${this.props.dateRange.end.format("MMMM D, YYYY")}`
     return (
-      <div className="form-group row">
+      <div className="form-group row d-flex justify-content-center">
         <label className="col-sm-2 col-form-label">Date Range</label>
         <div className="col-sm-6 col-md-4">
           <div className="input-group add-on">
