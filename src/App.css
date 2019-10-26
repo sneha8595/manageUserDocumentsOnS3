@@ -46,9 +46,9 @@
   text-decoration: none;
 }
 
-.d-flex {
+.name-search,
+.advanced-search {
   margin-top: 3rem;
-  margin-bottom: 3rem;
 }
 
 .name-search {
@@ -59,20 +59,51 @@
   margin-top: 1rem;
 }
 
-.name-search button,
-.advanced-search button {
-  background-color: #563d7c;
+.advanced-search-link,
+.advanced-search-link:hover, .custom-color {
+  color: #17a2b8;
 }
 
 .name-search input {
   border-radius: 15px;
 }
 
-.route-buttons .btn {
-  height: 50px;
-  width: 300px;
-}
-
 .btn-fit {
   height: fit-content !important;
+}
+
+/* Override Tags style */
+.react-tagsinput {
+  border: 1px solid #ced4da !important;
+  border-radius: .25rem !important;
+}
+
+.react-tagsinput-tag {
+  background-color: #047bd5 !important;
+  color: white !important;
+  border: none !important;
+}
+
+.react-tagsinput-input {
+  font-size: 1rem;
+  font-family: inherit;
+}
+
+/* .omc-logo {
+  width: 80%;
+  height: 90%;
+} */
+
+.header-text {
+  margin: auto;
+  height: 50px;
+  line-height: 50px;
+  text-align: center;
+  font-weight: 500;
+  font-size:1.5rem;
+}
+
+.username{
+  font-weight: 500;
+  font-size:1rem
 }

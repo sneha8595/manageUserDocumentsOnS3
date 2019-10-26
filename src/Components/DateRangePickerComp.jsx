@@ -22,7 +22,7 @@ class DateRangePickerComp extends React.Component {
               value={selectionvalue} readOnly
             />
             <div className="input-group-btn">
-              <Button onClick={this.onToggle}>
+              <Button outline color="info" onClick={this.onToggle}>
                 {!this.state.isOpen && <FaCaretDown />}{this.state.isOpen && <FaCaretUp />}
               </Button>
             </div>
@@ -35,7 +35,7 @@ class DateRangePickerComp extends React.Component {
             )}
           </div>
         </div>
-        <Button className="col-sm-1 btn-fit" onClick={() => this.props.handleSearch('dateRange')}><FaSearch /></Button>
+        <Button color="info" className="col-sm-1 btn-fit" onClick={() => this.props.handleSearch('dateRange')}><FaSearch /></Button>
       </div>
     );
   }

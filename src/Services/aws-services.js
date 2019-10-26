@@ -1,36 +1,95 @@
+import { CognitoAuth } from 'amazon-cognito-auth-js';
+import { CognitoUserPool } from 'amazon-cognito-identity-js';
+
 const AWS = require("aws-sdk");
 const bluebird = require('bluebird');
-
-const fileStorageS3Bucket = 'omc-dms-files';
-const bucketRegion = 'ap-south-1';
-const IdentityPoolId = 'ap-south-1:8a0cbc67-bdea-4894-b37d-2400934862fb';
-const dbTableName = 'omc-dms-file-details';
+const fileStorageS3Bucket = process.env.REACT_APP_s3BucketName;
+const region = process.env.REACT_APP_region;
+const IdentityPoolId = process.env.REACT_APP_IdentityPoolId;
+const dbTableName = process.env.REACT_APP_dbTableName;
+const UserPoolId = process.env.REACT_APP_UserPoolId;
+const AppClientId = process.env.REACT_APP_AppClientId;
+const appWebDomain = process.env.REACT_APP_DOMAIN;
+const cognitoAuthUrl = process.env.REACT_APP_COGNITO_AUTH;
 const signedUrlExpireSeconds = 600;
-const UserPoolId = "ap-south-1_Ut8WAkZ0b";
-//const AppClientId = "5okb1tnp8coildss53virj6dvf";
 let docClient;
 let s3;
+
+const data = {
+    UserPoolId: UserPoolId,
+    ClientId: AppClientId
+};
+const userPool = new CognitoUserPool(data);
 
 // configure AWS to work with promises
 AWS.config.setPromisesDependency(bluebird);
 
-export const setAWSConfig=(idToken)=>{
-    AWS.config.update({
-        credentials: new AWS.CognitoIdentityCredentials({
-            IdentityPoolId: IdentityPoolId,
-            Logins: {
-                [`cognito-idp.${bucketRegion}.amazonaws.com/${UserPoolId}`]: idToken
+export const storeUserInfoInLSAndSetAWSConfig = (cb) => {
+    // Configuration for Auth instance.
+    var authData = {
+        UserPoolId: UserPoolId,
+        ClientId: AppClientId,
+        RedirectUriSignIn: `${appWebDomain}/login`,
+        RedirectUriSignOut: `${appWebDomain}/logout`,
+        AppWebDomain: appWebDomain,
+        TokenScopesArray: ['email']
+    };
+    var auth = new CognitoAuth(authData);
+    //Callbacks, you must declare, but can be empty. 
+    auth.userhandler = {
+        onSuccess: function (result) {
+
+        },
+        onFailure: function (err) {
+        }
+    };
+    //Get the full url with the hash data.
+    var curUrl = window.location.href;
+    //here is the trick, this step configure the LocalStorage with the user.
+    auth.parseCognitoWebResponse(curUrl);  
+    checkIfUserLoggedInAndSetAWSConfig(cb);
+}
+
+export const checkIfUserLoggedInAndSetAWSConfig=(cb)=>{
+    //behind the scene getCurrentUser looks for the user on the local storage. 
+    var cognitoUser = userPool.getCurrentUser();
+    if (cognitoUser != null) {
+        cognitoUser.getSession(function (err, result) {
+            if (result) {
+                console.log('You are now logged in.');
+                AWS.config.update({
+                    credentials: new AWS.CognitoIdentityCredentials({
+                        IdentityPoolId: IdentityPoolId,
+                        Logins: {
+                            [`cognito-idp.${region}.amazonaws.com/${UserPoolId}`]: result.getIdToken().getJwtToken()
+                        }
+                    }),
+                    region: region
+                });
+
+                s3 = new AWS.S3({
+                    apiVersion: '2006-03-01',
+                    params: { Bucket: fileStorageS3Bucket }
+                });
+
+                docClient = new AWS.DynamoDB.DocumentClient();
+
+                cb(cognitoUser);
+            } else {
+                cb(false);
             }
-        }),
-        region: bucketRegion
-    });
+        });
+    }else{
+        cb(false);
+    }
+}
 
-    s3 = new AWS.S3({
-        apiVersion: '2006-03-01',
-        params: { Bucket: fileStorageS3Bucket }
-    });
-
-    docClient = new AWS.DynamoDB.DocumentClient();
+export const logout=()=>{
+    var cognitoUser = userPool.getCurrentUser();
+    if (cognitoUser != null) {
+        cognitoUser.signOut();
+    }    
+    window.location.href = cognitoLogoutUrl;
 }
 
 export function uploadFileToS3(fileName, file) {
@@ -52,10 +111,8 @@ export function uploadUserDetailsToDDB(item) {
 
 export async function getFileUrls(key, value) {
     let params, data;
-    if (typeof value == "string") {
-        value = value.toLowerCase();
-    }
     if (key === 'name') {
+        value = value.toLowerCase();
         params = {
             TableName: dbTableName,
             FilterExpression: "contains (#key, :value)",
@@ -68,21 +125,26 @@ export async function getFileUrls(key, value) {
         }
         data = await scanData(params);
     }
-    else if (key === 'description') {
+    else if (key === 'tags') {
+        let filterEx, exAttrValues={};
+        const tagsCount = value.length
+        if(tagsCount>1){
+            filterEx = [...Array(tagsCount).keys()].map(i=>`contains (#key, :val${i})`).join(" AND ")
+        }else{
+            filterEx = `contains (#key, :val0)`;
+        }
+        value.forEach((val,i)=>exAttrValues[":val"+i]=val.toLowerCase());
         params = {
             TableName: dbTableName,
-            FilterExpression: "contains (#key, :value)",
+            FilterExpression: filterEx,
             ExpressionAttributeNames: {
-                "#key": "searchDescription"
+                "#key": "searchTags"
             },
-            ExpressionAttributeValues: {
-                ":value": value
-            }
+            ExpressionAttributeValues:exAttrValues
         }
         data = await scanData(params);
     }
     else if (key === 'dateRange') {
-        debugger
         params = {
             TableName: dbTableName,
             FilterExpression: "#key BETWEEN :start and :end",
@@ -97,10 +159,6 @@ export async function getFileUrls(key, value) {
         data = await scanData(params);
     }
     return getPresignedUrls(data);
-}
-
-export const getUserProfileData=()=>{
-    
 }
 
 const scanData = async (params) => {
@@ -119,9 +177,8 @@ const getPresignedUrls = async (data) => {
     } catch (err) {
         return null;
     }
-
 }
 
-
-
-
+export const cognitoParams = `response_type=token&client_id=${AppClientId}&redirect_uri=${appWebDomain}${process.env.REACT_APP_COGNITO_REDIRECT_ROUTE}`
+export const cognitoLoginUrl = `${cognitoAuthUrl}/login?${cognitoParams}`;
+export const cognitoLogoutUrl = `${cognitoAuthUrl}/logout?${cognitoParams}`;

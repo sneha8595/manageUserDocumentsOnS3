@@ -6,46 +6,58 @@ import Login from './Login';
 import 'react-toastify/dist/ReactToastify.css';
 import Header from './Header';
 import '../App.css';
-import { setAWSConfig } from '../Services/aws-services';
-
+import * as AWSServices from '../Services/aws-services';
 
 class App extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            userLoggedIn: false
+            userLoggedIn: false,
+            username: null
         }
     }
-    componentDidMount() {
-        const self = this;
-        const eventMethod = window.addEventListener ? "addEventListener" : "attachEvent";
-        const eventer = window[eventMethod];
-        const messageEvent = eventMethod == "attachEvent" ? "onmessage" : "message";
-        // Listen to message from child window
-        eventer(messageEvent, function (e) {
-            console.log('origin: ', e.origin);
-            // Check if origin is proper
-            if (e.origin != 'http://localhost:3000') { return }
-            console.log('parent received message!: ', e.data);
-            if (e.data.idToken) {
-                self.setState({userLoggedIn:true});
-                setAWSConfig(e.data.idToken);
+    componentWillMount() {
+        AWSServices.checkIfUserLoggedInAndSetAWSConfig(userDetails=>{
+            if(!userDetails){
+                if (window.location.href.includes("id_token")) {
+                    AWSServices.storeUserInfoInLSAndSetAWSConfig((userDetails) => {
+                        this.setState({ userLoggedIn: userDetails ? true : false, username: userDetails.username })
+                    });
+                }
+            }else{
+                this.setState({ userLoggedIn: userDetails ? true : false, username: userDetails.username })
             }
-        }, false);
+        });
     }
     render() {
         return (
-            <div class="container">
-                <Header {...this.state} />
+            <div className="container">
                 <Router>
                     <div>
                         <Switch>
-                            <Route exact path="/Search" component={SearchDoc} {...this.state} />
-                            <Route exact path="/" component={SearchDoc} {...this.state}>
-                                <Redirect to="/Search" />
+                            <Route exact path="/">
+                                {!this.state.userLoggedIn && <Redirect to="/Login" />}
+                                {this.state.userLoggedIn && <Redirect to="/Search" />}
                             </Route>
-                            <Route exact path="/login" component={Login} />
-                            <Route exact path="/Upload" component={UploadDoc} {...this.state} />
+                            <Route exact path="/Login" component={Login} />
+                            <Route exact path="/Search" >
+                                {!this.state.userLoggedIn &&
+                                    <Redirect to="/Login" />
+                                }
+                                {this.state.userLoggedIn &&
+                                    <div><Header {...this.state} />
+                                        <SearchDoc {...this.state} />
+                                    </div>}
+                            </Route>
+                            <Route exact path="/Upload" >
+                                {!this.state.userLoggedIn &&
+                                    <Redirect to="/Login" />
+                                }
+                                {this.state.userLoggedIn &&
+                                    <div><Header {...this.state} />
+                                        <UploadDoc {...this.state} /></div>
+                                }
+                            </Route>
                         </Switch>
                     </div>
                 </Router>
