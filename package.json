@@ -28,8 +28,8 @@
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
-    "backup": "aws s3 sync s3://omc-dms.com S3_bkp --profile omc_sneha",
-    "deploy": "aws s3 sync build/ s3://omc-dms.com --acl public-read --profile omc_sneha --cache-control public,max-age=604800"
+    "backup": "aws s3 sync s3://omcdms.eladaram.com S3_bkp --profile omc_sneha",
+    "deploy": "aws s3 sync build/ s3://omcdms.eladaram.com --acl public-read --profile omc_sneha --cache-control public,max-age=604800"
   },
   "eslintConfig": {
     "extends": "react-app"
